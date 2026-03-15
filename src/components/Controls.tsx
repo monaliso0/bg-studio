@@ -35,6 +35,7 @@ interface Props {
   transparentBg: boolean;
   hasResult: boolean;
   isProcessing: boolean;
+  showActions: boolean;
   onBgColor: (v: string) => void;
   onAspectRatio: (v: [number, number]) => void;
   onPadding: (v: number) => void;
@@ -52,6 +53,7 @@ export default function Controls({
   transparentBg,
   hasResult,
   isProcessing,
+  showActions,
   onBgColor,
   onAspectRatio,
   onPadding,
@@ -168,28 +170,30 @@ export default function Controls({
       </div>
 
       {/* Actions */}
-      <div className="p-5 border-t border-border flex flex-col gap-1">
+      {showActions && <div className="p-6 border-t border-border flex flex-col gap-5">
         {/* Transparent PNG toggle */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <p className="text-sm text-ink">Export without background</p>
           <Toggle value={transparentBg} onChange={onTransparentBg} />
         </div>
-        <button
-          onClick={onDownload}
-          disabled={!hasResult || isProcessing}
-          className="w-full h-12 text-sm bg-ink text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-900 transition-colors"
-        >
-          Download
-        </button>
-        {hasResult && (
+        <div className="flex gap-2">
+          {hasResult && (
+            <button
+              onClick={onReset}
+              className="flex-1 h-12 text-sm border-2 border-ink text-ink hover:bg-gray-50 transition-colors"
+            >
+              Start over
+            </button>
+          )}
           <button
-            onClick={onReset}
-            className="w-full h-12 text-sm text-ink hover:text-muted transition-colors"
+            onClick={onDownload}
+            disabled={!hasResult || isProcessing}
+            className="flex-1 h-12 text-sm bg-ink text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-900 transition-colors"
           >
-            Start over
+            Download
           </button>
-        )}
-      </div>
+        </div>
+      </div>}
     </aside>
   );
 }

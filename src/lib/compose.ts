@@ -1,8 +1,9 @@
 export type ExportFormat = "png" | "jpg" | "webp";
+export type AspectRatioOption = [number, number] | "original";
 
 export interface ComposeOptions {
   bgColor: string;
-  aspectRatio: [number, number];
+  aspectRatio: AspectRatioOption;
   padding: number; // 0–40 (percent of shortest canvas side)
   format: ExportFormat;
   transparent?: boolean;
@@ -12,11 +13,14 @@ const LONG_SIDE = 1200;
 
 export async function composeImage(
   blob: Blob,
-  { bgColor, aspectRatio: [rW, rH], padding, format, transparent }: ComposeOptions
+  { bgColor, aspectRatio, padding, format, transparent }: ComposeOptions
 ): Promise<string> {
   const url = URL.createObjectURL(blob);
   try {
     const img = await loadImage(url);
+
+    const rW = aspectRatio === "original" ? img.naturalWidth : aspectRatio[0];
+    const rH = aspectRatio === "original" ? img.naturalHeight : aspectRatio[1];
 
     const [cW, cH] =
       rW >= rH

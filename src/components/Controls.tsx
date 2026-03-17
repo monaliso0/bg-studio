@@ -1,8 +1,9 @@
 "use client";
 
-import { ExportFormat } from "@/lib/compose";
+import { ExportFormat, AspectRatioOption } from "@/lib/compose";
 
-export const ASPECT_RATIOS: { label: string; value: [number, number] }[] = [
+export const ASPECT_RATIOS: { label: string; value: AspectRatioOption }[] = [
+  { label: "Original", value: "original" },
   { label: "1:1", value: [1, 1] },
   { label: "4:3", value: [4, 3] },
   { label: "3:4", value: [3, 4] },
@@ -12,11 +13,12 @@ export const ASPECT_RATIOS: { label: string; value: [number, number] }[] = [
 
 const FORMATS: ExportFormat[] = ["png", "jpg", "webp"];
 
-function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+export function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label?: string }) {
   return (
     <button
       role="switch"
       aria-checked={value}
+      aria-label={label}
       onClick={() => onChange(!value)}
       className={`relative w-10 h-5 shrink-0 transition-colors overflow-hidden ${value ? "bg-ink" : "bg-border"}`}
     >
@@ -27,9 +29,15 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
+function isRatioActive(current: AspectRatioOption, option: AspectRatioOption): boolean {
+  if (option === "original") return current === "original";
+  if (current === "original") return false;
+  return current[0] === option[0] && current[1] === option[1];
+}
+
 interface Props {
   bgColor: string;
-  aspectRatio: [number, number];
+  aspectRatio: AspectRatioOption;
   padding: number;
   format: ExportFormat;
   transparentBg: boolean;
@@ -37,7 +45,7 @@ interface Props {
   isProcessing: boolean;
   showActions: boolean;
   onBgColor: (v: string) => void;
-  onAspectRatio: (v: [number, number]) => void;
+  onAspectRatio: (v: AspectRatioOption) => void;
   onPadding: (v: number) => void;
   onFormat: (v: ExportFormat) => void;
   onTransparentBg: (v: boolean) => void;
@@ -72,21 +80,24 @@ export default function Controls({
 
         {/* Background Color */}
         <section className={`px-6 py-8 ${transparentBg ? "opacity-30 pointer-events-none" : ""}`}>
-          <label className="block text-xs uppercase tracking-[0.1em] text-black/50 mb-5">
+          <label htmlFor="ctrl-bg-color" className="block text-xs uppercase tracking-[0.1em] text-black/60 mb-5">
             Background
           </label>
           <div className="flex items-center gap-2">
             <input
+              id="ctrl-bg-color"
               type="color"
               value={pickerValue}
               onChange={(e) => onBgColor(e.target.value)}
               className="w-9 h-9 shrink-0 border border-border cursor-pointer"
             />
-            <div className={`flex-1 flex items-center border h-9 px-3 gap-1 ${
+            <div className={`flex-1 min-w-0 flex items-center border h-9 px-3 gap-1 ${
               isValidHex || bgColor === "" ? "border-border" : "border-red-300"
             }`}>
-              <span className="text-sm text-black/50 select-none">#</span>
+              <span aria-hidden="true" className="text-sm text-black/60 select-none">#</span>
+              <label htmlFor="ctrl-bg-hex" className="sr-only">Hex da cor de fundo</label>
               <input
+                id="ctrl-bg-hex"
                 type="text"
                 value={hexDisplay}
                 maxLength={6}
@@ -100,16 +111,17 @@ export default function Controls({
 
         {/* Aspect Ratio */}
         <section className="px-6 py-8 border-t border-border">
-          <label className="block text-xs uppercase tracking-[0.1em] text-black/50 mb-5">
+          <p id="ctrl-aspect-label" className="text-xs uppercase tracking-[0.1em] text-black/60 mb-5">
             Aspect Ratio
-          </label>
-          <div className="flex gap-2 flex-wrap">
+          </p>
+          <div role="group" aria-labelledby="ctrl-aspect-label" className="flex gap-2 flex-wrap">
             {ASPECT_RATIOS.map(({ label, value }) => {
-              const active = aspectRatio[0] === value[0] && aspectRatio[1] === value[1];
+              const active = isRatioActive(aspectRatio, value);
               return (
                 <button
                   key={label}
                   onClick={() => onAspectRatio(value)}
+                  aria-pressed={active}
                   className={`text-xs px-3 h-7 border transition-colors ${
                     active
                       ? "border-ink bg-ink text-white"
@@ -126,34 +138,37 @@ export default function Controls({
         {/* Padding */}
         <section className="px-6 py-8 border-t border-border">
           <div className="flex justify-between items-center mb-5">
-            <label className="text-xs uppercase tracking-[0.1em] text-black/50">Padding</label>
-            <span className="text-sm font-medium uppercase">{padding}%</span>
+            <label htmlFor="ctrl-padding" className="text-xs uppercase tracking-[0.1em] text-black/60">Padding</label>
+            <span aria-hidden="true" className="text-sm font-medium uppercase">{padding}%</span>
           </div>
           <input
+            id="ctrl-padding"
             type="range"
             min={0}
             max={40}
             step={1}
             value={padding}
+            aria-valuetext={`${padding}%`}
             onChange={(e) => onPadding(Number(e.target.value))}
             className="w-full"
           />
-          <div className="flex justify-between mt-1">
-            <span className="text-xs text-black/50 uppercase tracking-[0.1em]">0%</span>
-            <span className="text-xs text-black/50 uppercase tracking-[0.1em]">40%</span>
+          <div aria-hidden="true" className="flex justify-between mt-1">
+            <span className="text-xs text-black/60 uppercase tracking-[0.1em]">0%</span>
+            <span className="text-xs text-black/60 uppercase tracking-[0.1em]">40%</span>
           </div>
         </section>
 
         {/* Export Format */}
         <section className={`px-6 py-8 border-t border-border ${transparentBg ? "opacity-30 pointer-events-none" : ""}`}>
-          <label className="block text-xs uppercase tracking-[0.1em] text-black/50 mb-5">
+          <p id="ctrl-format-label" className="text-xs uppercase tracking-[0.1em] text-black/60 mb-5">
             Export Format
-          </label>
-          <div className="flex gap-2 flex-wrap">
+          </p>
+          <div role="group" aria-labelledby="ctrl-format-label" className="flex gap-2 flex-wrap">
             {FORMATS.map((f) => (
               <button
                 key={f}
                 onClick={() => onFormat(f)}
+                aria-pressed={format === f}
                 className={`text-xs px-3 h-7 border uppercase tracking-wider transition-colors ${
                   format === f
                     ? "border-ink bg-ink text-white"
@@ -166,7 +181,6 @@ export default function Controls({
           </div>
         </section>
 
-
       </div>
 
       {/* Actions */}
@@ -174,7 +188,7 @@ export default function Controls({
         {/* Transparent PNG toggle */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-ink">Export without background</p>
-          <Toggle value={transparentBg} onChange={onTransparentBg} />
+          <Toggle value={transparentBg} onChange={onTransparentBg} label="Exportar sem fundo" />
         </div>
         <div className="flex gap-2">
           {hasResult && (
@@ -190,7 +204,7 @@ export default function Controls({
             disabled={!hasResult || isProcessing}
             className="flex-1 h-12 text-sm bg-ink text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-900 transition-colors"
           >
-            Download
+            Download all
           </button>
         </div>
       </div>}

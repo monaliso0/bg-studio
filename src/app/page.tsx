@@ -1,15 +1,10 @@
-"use client";
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import Controls from "@/components/Controls";
-import Uploader from "@/components/Uploader";
-import { composeImage, type ComposeOptions, type ExportFormat } from "@/lib/compose";
-
-type Stage = "idle" | "removing" | "done" | "error";
+import Link from "next/link";
+import NavAccount from "@/components/NavAccount";
+import CheckoutButton from "@/components/CheckoutButton";
 
 function OneBackLogo() {
   return (
-    <svg width="124" height="44" viewBox="0 0 88 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg aria-hidden="true" focusable="false" width="124" height="44" viewBox="0 0 88 31" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path fillRule="evenodd" clipRule="evenodd" d="M31.6134 31H0V0H31.6134V31ZM1.58067 15.5V29.45H30.0327V15.5H1.58067Z" fill="black"/>
       <path d="M39.0994 19.0898C38.6189 19.0898 38.2016 19.1849 37.8475 19.375C37.5019 19.5651 37.2195 19.8214 37.0003 20.1438C36.7811 20.4579 36.6167 20.8175 36.5071 21.2226C36.406 21.6277 36.3554 22.041 36.3554 22.4626C36.3554 22.8842 36.406 23.2975 36.5071 23.7026C36.6167 24.1077 36.7811 24.4714 37.0003 24.7938C37.2195 25.1079 37.5019 25.3601 37.8475 25.5502C38.2016 25.7403 38.6189 25.8354 39.0994 25.8354C39.58 25.8354 39.993 25.7403 40.3387 25.5502C40.6927 25.3601 40.9794 25.1079 41.1986 24.7938C41.4177 24.4714 41.5779 24.1077 41.6791 23.7026C41.7887 23.2975 41.8435 22.8842 41.8435 22.4626C41.8435 22.041 41.7887 21.6277 41.6791 21.2226C41.5779 20.8175 41.4177 20.4579 41.1986 20.1438C40.9794 19.8214 40.6927 19.5651 40.3387 19.375C39.993 19.1849 39.58 19.0898 39.0994 19.0898ZM39.0994 17.825C39.7739 17.825 40.3766 17.949 40.9077 18.197C41.4473 18.445 41.9025 18.7798 42.2734 19.2014C42.6443 19.623 42.9268 20.1149 43.1207 20.677C43.323 21.2391 43.4241 21.8343 43.4241 22.4626C43.4241 23.0991 43.323 23.6985 43.1207 24.2606C42.9268 24.8227 42.6443 25.3146 42.2734 25.7362C41.9025 26.1578 41.4473 26.4926 40.9077 26.7406C40.3766 26.9803 39.7739 27.1002 39.0994 27.1002C38.425 27.1002 37.818 26.9803 37.2785 26.7406C36.7474 26.4926 36.2964 26.1578 35.9254 25.7362C35.5545 25.3146 35.2679 24.8227 35.0656 24.2606C34.8717 23.6985 34.7747 23.0991 34.7747 22.4626C34.7747 21.8343 34.8717 21.2391 35.0656 20.677C35.2679 20.1149 35.5545 19.623 35.9254 19.2014C36.2964 18.7798 36.7474 18.445 37.2785 18.197C37.818 17.949 38.425 17.825 39.0994 17.825Z" fill="black"/>
       <path d="M44.6604 20.4786H46.0261V21.421L46.0514 21.4458C46.2706 21.0903 46.5572 20.8134 46.9113 20.615C47.2654 20.4083 47.6574 20.305 48.0873 20.305C48.8039 20.305 49.3687 20.4869 49.7818 20.8506C50.1949 21.2143 50.4014 21.7599 50.4014 22.4874V26.8894H48.9598V22.8594C48.943 22.3551 48.8334 21.9914 48.6311 21.7682C48.4287 21.5367 48.1126 21.421 47.6827 21.421C47.4382 21.421 47.219 21.4665 47.0251 21.5574C46.8312 21.6401 46.6668 21.7599 46.5319 21.917C46.3971 22.0658 46.2917 22.2435 46.2158 22.4502C46.1399 22.6569 46.102 22.8759 46.102 23.1074V26.8894H44.6604V20.4786Z" fill="black"/>
@@ -22,188 +17,127 @@ function OneBackLogo() {
   );
 }
 
-const DEFAULT_BG = "#FAFAFA";
-const DEFAULT_RATIO: [number, number] = [1, 1];
-const DEFAULT_PADDING = 10;
-const DEFAULT_FORMAT: ExportFormat = "png";
+const CHECK_ICON = (
+  <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 8L6.5 11.5L13 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 
-export default function Home() {
-  const [stage, setStage] = useState<Stage>("idle");
-  const [originalUrl, setOriginalUrl] = useState<string | null>(null);
-  const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
-  const [composedUrl, setComposedUrl] = useState<string | null>(null);
-  const [showOriginal, setShowOriginal] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const [bgColor, setBgColor] = useState(DEFAULT_BG);
-  const [aspectRatio, setAspectRatio] = useState<[number, number]>(DEFAULT_RATIO);
-  const [padding, setPadding] = useState(DEFAULT_PADDING);
-  const [format, setFormat] = useState<ExportFormat>(DEFAULT_FORMAT);
-  const [transparentBg, setTransparentBg] = useState(false);
-  const [processedUrl, setProcessedUrl] = useState<string | null>(null);
-
-  const originalUrlRef = useRef<string | null>(null);
-
-  // Create object URL for transparent preview
-  useEffect(() => {
-    if (!processedBlob) { setProcessedUrl(null); return; }
-    const url = URL.createObjectURL(processedBlob);
-    setProcessedUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [processedBlob]);
-
-  // Recompose whenever settings or processed blob changes
-  useEffect(() => {
-    if (!processedBlob) return;
-    const valid = /^#[0-9A-Fa-f]{6}$/.test(bgColor);
-    if (!valid && !transparentBg) return;
-
-    const options: ComposeOptions = { bgColor, aspectRatio, padding, format, transparent: transparentBg };
-    composeImage(processedBlob, options).then(setComposedUrl);
-  }, [processedBlob, bgColor, aspectRatio, padding, format, transparentBg]);
-
-  const handleFile = useCallback(async (file: File) => {
-    // Revoke previous object URL
-    if (originalUrlRef.current) URL.revokeObjectURL(originalUrlRef.current);
-
-    const url = URL.createObjectURL(file);
-    originalUrlRef.current = url;
-    setOriginalUrl(url);
-    setStage("removing");
-    setErrorMsg("");
-    setShowOriginal(false);
-
-    try {
-      const { removeBackground } = await import("@imgly/background-removal");
-      const blob = await removeBackground(file, {
-        output: { format: "image/png", quality: 1 },
-      });
-      setProcessedBlob(blob);
-      setStage("done");
-    } catch (err) {
-      console.error(err);
-      setErrorMsg("Failed to process image. Please try again.");
-      setStage("error");
-    }
-  }, []);
-
-  const handleDownload = useCallback(() => {
-    if (!composedUrl) return;
-    const a = document.createElement("a");
-    a.href = composedUrl;
-    a.download = transparentBg ? "product.png" : `product.${format}`;
-    a.click();
-  }, [composedUrl, format, transparentBg]);
-
-  const handleReset = useCallback(() => {
-    if (originalUrlRef.current) {
-      URL.revokeObjectURL(originalUrlRef.current);
-      originalUrlRef.current = null;
-    }
-    setStage("idle");
-    setOriginalUrl(null);
-    setProcessedBlob(null);
-    setProcessedUrl(null);
-    setComposedUrl(null);
-    setShowOriginal(false);
-    setErrorMsg("");
-  }, []);
-
-  const isProcessing = stage === "removing" || (stage === "done" && !composedUrl && !transparentBg);
-
+export default function LandingPage() {
   return (
-    <div className="flex h-screen bg-[#eaeaea]">
-      {/* Canvas */}
-      <main className="flex-1 relative p-3 flex items-center justify-center overflow-hidden">
-        {/* Logo — always visible */}
-        <div className="absolute top-3 left-3 z-10 w-[124px] h-11 pointer-events-none">
+    <div className="min-h-screen bg-white text-black font-sans">
+
+      {/* ── Nav ── */}
+      <nav aria-label="Navegação principal" className="flex items-center justify-between px-6 md:px-12 h-20 border-b border-[#e5e5e5]">
+        <a href="/" aria-label="OneBack — página inicial">
           <OneBackLogo />
-        </div>
+        </a>
+        <NavAccount />
+      </nav>
 
-        {stage === "idle" && <Uploader onFile={handleFile} />}
+      {/* ── Hero ── */}
+      <section id="main-content" className="flex flex-col items-center text-center px-6 pt-20 pb-24 md:pt-28 md:pb-32">
+        <h1 className="hero-fade text-4xl md:text-6xl font-semibold tracking-tight leading-tight max-w-3xl">
+          Fotos consistentes.<br />Mais confiança.<br />Mais vendas.
+        </h1>
+        <p className="hero-fade-1 mt-6 text-base md:text-lg text-black/60 max-w-lg leading-relaxed">
+          Padronize o fundo de todas as suas imagens em segundos. Seu catálogo fica mais profissional — e o cliente entende seu produto mais rápido.
+        </p>
+        <Link
+          href="/editor"
+          className="hero-fade-2 mt-10 inline-flex items-center gap-2 bg-black text-white text-sm px-8 h-12 hover:bg-gray-900 transition-colors"
+        >
+          Experimentar grátis →
+        </Link>
+        <p className="hero-fade-3 mt-4 text-xs text-black/60">Sem edição manual. Sem complicação.</p>
+      </section>
 
-        {stage === "removing" && (
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-5 h-5 border-2 border-ink border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted">Removing background…</p>
-            <p className="text-xs text-muted">This may take a moment on first use</p>
+      {/* ── Features ── */}
+      <section className="px-6 md:px-12 pb-24 border-t border-[#e5e5e5] pt-20">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-black/60 mb-3">Resultado imediato</p>
+            <h3 className="text-lg font-medium mb-2">Sem Photoshop, sem agência</h3>
+            <p className="text-sm text-black/60 leading-relaxed">
+              Faça upload da foto, escolha o fundo e o formato — o OneBack remove o fundo e entrega a imagem pronta em segundos.
+            </p>
           </div>
-        )}
+          <div>
+            <p className="text-xs uppercase tracking-widest text-black/60 mb-3">Consistência visual</p>
+            <h3 className="text-lg font-medium mb-2">Todo o catálogo no mesmo padrão</h3>
+            <p className="text-sm text-black/60 leading-relaxed">
+              Processe dezenas de fotos de uma vez com as mesmas configurações. Catálogos que parecem profissionais vendem mais.
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-widest text-black/60 mb-3">Pronto para vender</p>
+            <h3 className="text-lg font-medium mb-2">No formato de cada plataforma</h3>
+            <p className="text-sm text-black/60 leading-relaxed">
+              PNG, JPG ou WebP. Aspect ratio 1:1 para Shopee e Mercado Livre, 4:3 para site, ou livre para redes sociais.
+            </p>
+          </div>
+        </div>
+      </section>
 
-        {(stage === "done" || stage === "error") && (
-          <>
-            {/* Preview toggle — absolute bottom-center */}
-            {stage === "done" && originalUrl && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 bg-white p-1 flex">
-                <button
-                  onClick={() => setShowOriginal(false)}
-                  className={`text-xs px-5 h-9 transition-colors ${
-                    !showOriginal ? "bg-ink text-white" : "text-ink hover:bg-gray-50"
-                  }`}
-                >
-                  Result
-                </button>
-                <button
-                  onClick={() => setShowOriginal(true)}
-                  className={`text-xs px-5 h-9 transition-colors ${
-                    showOriginal ? "bg-ink text-white" : "text-ink hover:bg-gray-50"
-                  }`}
-                >
-                  Original
-                </button>
-              </div>
-            )}
+      {/* ── Pricing ── */}
+      <section className="px-6 md:px-12 pb-24 border-t border-[#e5e5e5] pt-20">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-semibold text-center mb-4">Comece grátis, escale quando precisar</h2>
+          <p className="text-sm text-black/60 text-center mb-12">Sem burocracia. Cancele quando quiser.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            {stage === "error" ? (
-              <div className="text-center">
-                <p className="text-sm text-red-500 mb-3">{errorMsg}</p>
-                <button
-                  onClick={handleReset}
-                  className="text-xs underline text-muted hover:text-ink"
-                >
-                  Try again
-                </button>
+            {/* Free */}
+            <div className="border border-[#e5e5e5] p-8 flex flex-col gap-6">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-black/60 mb-2">Free</p>
+                <p className="text-3xl font-semibold">R$ 0</p>
+                <p className="text-sm text-black/60 mt-1">para sempre</p>
               </div>
-            ) : showOriginal && originalUrl ? (
-              <img
-                src={originalUrl}
-                alt="Original"
-                className="max-w-[640px] max-h-[640px]"
-              />
-            ) : isProcessing ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-5 h-5 border-2 border-ink border-t-transparent rounded-full animate-spin" />
-                <p className="text-xs text-muted">Composing…</p>
-              </div>
-            ) : transparentBg && composedUrl ? (
-              <img src={composedUrl} alt="Result (transparent)" className="checkered max-w-[640px] max-h-[640px] shadow-sm" />
-            ) : composedUrl ? (
-              <img src={composedUrl} alt="Result" className="max-w-[640px] max-h-[640px] shadow-sm" />
-            ) : null}
-          </>
-        )}
-      </main>
+              <ul className="flex flex-col gap-3 text-sm text-black/70">
+                <li className="flex items-center gap-2">{CHECK_ICON} 10 downloads por mês</li>
+                <li className="flex items-center gap-2">{CHECK_ICON} Modo Single</li>
+                <li className="flex items-center gap-2">{CHECK_ICON} PNG, JPG e WebP</li>
+                <li className="flex items-center gap-2">{CHECK_ICON} Todos os aspect ratios</li>
+              </ul>
+              <Link
+                href="/editor"
+                className="mt-auto w-full h-11 border border-black text-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                Começar grátis
+              </Link>
+            </div>
 
-      {/* Sidebar */}
-      <div className="w-[329px] shrink-0 p-3">
-        <Controls
-          bgColor={bgColor}
-          aspectRatio={aspectRatio}
-          padding={padding}
-          format={format}
-          transparentBg={transparentBg}
-          hasResult={!!composedUrl}
-          isProcessing={isProcessing}
-          showActions={stage === "done" || stage === "error"}
-          onBgColor={setBgColor}
-          onAspectRatio={setAspectRatio}
-          onPadding={setPadding}
-          onFormat={setFormat}
-          onTransparentBg={setTransparentBg}
-          onDownload={handleDownload}
-          onReset={handleReset}
-        />
-      </div>
+            {/* Pro */}
+            <div className="border border-black p-8 flex flex-col gap-6 bg-black text-white">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/60 mb-2">Pro</p>
+                <p className="text-3xl font-semibold">R$ 29<span className="text-lg font-normal text-white/70">/mês</span></p>
+                <p className="text-sm text-white/60 mt-1">ou R$ 249/ano · 31% off</p>
+              </div>
+              <ul className="flex flex-col gap-3 text-sm text-white">
+                <li className="flex items-center gap-2">{CHECK_ICON} Downloads ilimitados</li>
+                <li className="flex items-center gap-2">{CHECK_ICON} Modo Multi (lote)</li>
+                <li className="flex items-center gap-2">{CHECK_ICON} PNG, JPG e WebP</li>
+                <li className="flex items-center gap-2">{CHECK_ICON} Todos os aspect ratios</li>
+              </ul>
+              <CheckoutButton plan="monthly" />
+              <p className="text-xs text-white/50 text-center -mt-3">Modo Multi não disponível no celular</p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-[#e5e5e5] px-6 md:px-12 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <span aria-hidden="true"><OneBackLogo /></span>
+        <p className="text-xs text-black/60">© {new Date().getFullYear()} OneBack. Todos os direitos reservados.</p>
+        <div className="flex gap-4">
+          <Link href="/terms" className="text-xs text-black/60 hover:text-black/70 transition-colors">Termos de Uso</Link>
+          <Link href="/privacy" className="text-xs text-black/60 hover:text-black/70 transition-colors">Privacidade</Link>
+        </div>
+      </footer>
+
     </div>
   );
 }

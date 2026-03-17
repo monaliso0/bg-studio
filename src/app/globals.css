@@ -6,6 +6,12 @@
   box-sizing: border-box;
 }
 
+/* Focus visible — indicador de foco para navegação por teclado */
+:focus-visible {
+  outline: 2px solid #111111;
+  outline-offset: 2px;
+}
+
 html,
 body {
   height: 100%;
@@ -54,6 +60,90 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 input[type="color"]::-webkit-color-swatch {
   border: none;
 }
+
+/* Mobile slider — 36×36px thumb, tall touch area */
+.mobile-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 36px;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+}
+
+.mobile-range::-webkit-slider-runnable-track {
+  height: 2px;
+  background: #e5e5e5;
+  border-radius: 1px;
+}
+
+.mobile-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  background: #111111;
+  cursor: pointer;
+}
+
+.mobile-range::-moz-range-track {
+  height: 2px;
+  background: #e5e5e5;
+  border-radius: 1px;
+}
+
+.mobile-range::-moz-range-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  background: #111111;
+  border: none;
+  cursor: pointer;
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skeleton-shimmer {
+  background-color: #e8e8e8;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s linear infinite;
+}
+
+/* Hero fade-in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-fade {
+  animation: fadeInUp 0.6s ease-out both;
+}
+.hero-fade-1 { animation: fadeInUp 0.6s ease-out 0.1s both; }
+.hero-fade-2 { animation: fadeInUp 0.6s ease-out 0.22s both; }
+.hero-fade-3 { animation: fadeInUp 0.6s ease-out 0.36s both; }
 
 .checkered {
   background-color: #ffffff;

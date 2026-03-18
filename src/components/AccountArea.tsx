@@ -83,7 +83,7 @@ export default function AccountArea({ refreshSignal }: Props) {
           {infoLoading ? (
             <div className="h-3 w-16 bg-white/10 animate-pulse rounded-sm mt-0.5" />
           ) : info?.subscribed ? (
-            <span className="inline-flex items-center gap-1 self-start bg-[#1f1f1f] px-1 py-0.5">
+            <span className="inline-flex items-center gap-1 self-start bg-[#262626] px-1 py-0.5">
               <img src="/star-pro-plan.svg" alt="" aria-hidden="true" width={10} height={10} />
               <span className="text-[10px] font-medium tracking-[-0.3px] leading-none bg-gradient-to-r from-white to-[#999] bg-clip-text text-transparent">
                 Pro Plan

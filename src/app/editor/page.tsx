@@ -17,6 +17,11 @@ import { useFocusTrap } from "@/lib/useFocusTrap";
 type Mode = "single" | "multi";
 type SingleStage = "idle" | "removing" | "done" | "error";
 
+function ratioSuffix(aspectRatio: AspectRatioOption): string {
+  if (aspectRatio === "original") return "original";
+  return `${aspectRatio[0]}x${aspectRatio[1]}`;
+}
+
 const DEFAULT_BG = "#FAFAFA";
 const DEFAULT_RATIO: AspectRatioOption = "original";
 const DEFAULT_PADDING = 10;
@@ -265,7 +270,7 @@ export default function Home() {
   const handleSingleDownload = useCallback(() => {
     if (!composedUrl) return;
     withDownloadGate(async () => {
-      triggerFileDownload(composedUrl, transparentBg ? "product.png" : `product.${format}`);
+      triggerFileDownload(composedUrl, transparentBg ? `product_${ratioSuffix(aspectRatio)}.png` : `product_${ratioSuffix(aspectRatio)}.${format}`);
     });
   }, [composedUrl, format, transparentBg, withDownloadGate, triggerFileDownload]);
 
@@ -360,12 +365,12 @@ export default function Home() {
       doneItems.map(async (item, index) => {
         const res = await fetch(item.composedUrl!);
         const blob = await res.blob();
-        zip.file(`product-${String(index + 1).padStart(2, "0")}.${ext}`, blob);
+        zip.file(`product-${String(index + 1).padStart(2, "0")}_${ratioSuffix(aspectRatio)}.${ext}`, blob);
       })
     );
 
     const zipBlob = await zip.generateAsync({ type: "blob" });
-    triggerFileDownload(URL.createObjectURL(zipBlob), "oneback-images.zip");
+    triggerFileDownload(URL.createObjectURL(zipBlob), `oneback-images_${ratioSuffix(aspectRatio)}.zip`);
   }, [isSignedIn, isSubscribed, openSignIn, format, transparentBg, triggerFileDownload]);
 
   const handleMultiReset = useCallback(() => {

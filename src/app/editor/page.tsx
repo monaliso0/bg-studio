@@ -630,6 +630,11 @@ export default function Home() {
               )}
             </>
           )}
+          {/* Made by */}
+          <p className="absolute bottom-3 left-3 text-xs text-black/40 pointer-events-none select-none">
+            Made by Doze Ltda
+          </p>
+
         </main>
 
         {/* Sidebar */}
